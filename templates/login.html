@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.querySelector('.login-form');
+    const loginButton = document.querySelector('.login-button');
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            console.log('Formulário submetido');
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const captcha = document.getElementById('captcha-check').checked;
+
+            // Validação básica
+            if (!username || !password || !captcha) {
+                alert('Por favor, preencha todos os campos e confirme que não é um robô');
+                return;
+            }
+
+            // Mostrar loading
+            loginButton.disabled = true;
+            loginButton.innerHTML = 'Entrando...';
+            loginButton.classList.add('loading');
+
+            try {
+                console.log('Enviando dados:', { username, password });
+                
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+
+                const response = await fetch('{{ url_for("login") }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                console.log('Resposta recebida:', response.status);
+
+                if (response.redirected) {
+                    console.log('Redirecionando para:', response.url);
+                    window.location.href = response.url;
+                } else {
+                    const result = await response.text();
+                    console.log('Resposta completa:', result);
+                    
+                    // Recarregar a página para ver mensagens flash
+                    window.location.reload();
+                }
+
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+                alert('Erro de conexão. Tente novamente.');
+            } finally {
+                loginButton.disabled = false;
+                loginButton.innerHTML = 'Entrar';
+                loginButton.classList.remove('loading');
+            }
+        });
+    }
+});
+</script>
+<body>
+    <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">
+        <a href="{{ url_for('home') }}" aria-label="Grupo Multibelt - Voltar para home">
+          <img src="{{ url_for('static', filename='images/logo multibelt.svg') }}" alt="Grupo Multibelt" />
+        </a>
+      </div>
+      <nav class="main-nav" role="navigation">
+        <a href="{{ url_for('home') }}" class="nav-link active">Início</a>
+        <a href="#sobre" class="nav-link">Sobre</a>
+        {% if session.usuario_nome %}
+          <!-- Usuário logado - mostra dropdown com username -->
+          <div class="user-dropdown">
+            <button class="user-menu-toggle nav-link nav-link-cta">
+              <span class="user-greeting">Olá, {{ session.usuario_nome }}</span>
+              <span class="dropdown-arrow">▼</span>
+            </button>
+            <div class="user-dropdown-menu">
+              <a href="{{ url_for('admin') }}" class="dropdown-item">Painel Admin</a>
+              <a href="{{ url_for('logout') }}" class="dropdown-item">Sair</a>
+            </div>
+          </div>
+        {% else %}
+          <!-- Usuário não logado - mostra botão de login -->
+          <a href="{{ url_for('login') }}" class="nav-link nav-link-cta">Login</a>
+        {% endif %}
+      </nav>
+      <button class="mobile-menu-toggle" aria-label="Abrir menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+  
+    <div class="company-text">Grupo Multibelt</div>
+
+    <div class="login-container">
+        <form class="login-form" action="{{ url_for('login') }}" method="post">
+            <h2>LOGIN</h2>
+            
+            <!-- Mensagens Flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="input-group">
+                <label for="username">Usuário ou E-mail</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <div class="captcha-group">
+                <input type="checkbox" id="captcha-check" name="captcha-check" required>
+                <label for="captcha-check">Eu não sou um robô</label>
+            </div>
+            
+            <button type="submit" class="login-button">Entrar</button>
+            
+            <div class="extra-links">
+                <a href="{{ url_for('esqueci_senha') }}">Esqueceu a senha?</a>
+                <a href="{{ url_for('criar_conta') }}">Criar uma conta</a>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

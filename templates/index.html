@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Busca de Colaboradores - Grupo Multibelt</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">
+        <a href="{{ url_for('home') }}" aria-label="Grupo Multibelt - Voltar para home">
+          <img src="{{ url_for('static', filename='images/logo multibelt.svg') }}" alt="Grupo Multibelt" />
+        </a>
+      </div>
+      <nav class="main-nav" role="navigation">
+        <a href="{{ url_for('home') }}" class="nav-link active">Início</a>
+        <a href="{{ url_for('sobre') }}" class="nav-link">Sobre</a>
+        <a href="{{ url_for('graficos_page') }}" class="nav-link">Graficos</a>
+        {% if session.usuario_nome %}
+          <!-- Usuário logado - mostra dropdown com username -->
+          <div class="user-dropdown">
+            <button class="user-menu-toggle nav-link nav-link-cta">
+              <span class="user-greeting">Olá, {{ session.usuario_nome }}</span>
+              <span class="dropdown-arrow">▼</span>
+            </button>
+            <div class="user-dropdown-menu">
+              <a href="{{ url_for('admin') }}" class="dropdown-item">Painel Admin</a>
+              <a href="{{ url_for('logout') }}" class="dropdown-item">Sair</a>
+            </div>
+          </div>
+        {% else %}
+          <!-- Usuário não logado - mostra botão de login -->
+          <a href="{{ url_for('login') }}" class="nav-link nav-link-cta">Login</a>
+        {% endif %}
+      </nav>
+      <button class="mobile-menu-toggle" aria-label="Abrir menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Busca de Colaboradores</h1>
+    <p class="subtitle">Pesquise por nome, ID ou CPF dos colaboradores</p>
+
+    <div class="search-area">
+      <input id="searchBox" type="text" placeholder="Digite o nome, ID ou CPF..." autocomplete="off" />
+      <button id="clearBtn" class="clear-button">Limpar</button>
+    </div>
+
+    <div class="results-info">
+      <strong>Resultados encontrados:</strong> <span id="count">0</span>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">Buscando...</div>
+
+    <div class="table-container" id="tableContainer" aria-live="polite">
+      <table id="resultsTable" style="display:none;">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div id="noResults" class="no-results" style="display:none;">
+        Nenhum resultado encontrado. Tente buscar por nome, ID ou CPF.
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© <span id="year"></span> Grupo Multibelt. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+  <script>
+        // Atualizar ano no footer
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Dropdown menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenuToggle = document.querySelector('.user-menu-toggle');
+            if (userMenuToggle) {
+                userMenuToggle.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Impede que o clique se propague
+                    const dropdownMenu = this.nextElementSibling;
+                    const isVisible = dropdownMenu.style.display === 'block';
+                    
+                    // Fecha todos os dropdowns primeiro
+                    document.querySelectorAll('.user-dropdown-menu').forEach(menu => {
+                        menu.style.display = 'none';
+                    });
+                    
+                    // Abre/fecha o dropdown atual
+                    if (!isVisible) {
+                        dropdownMenu.style.display = 'block';
+                    }
+                });
+
+                // Fechar dropdown ao clicar fora
+                document.addEventListener('click', function(event) {
+                    if (!event.target.closest('.user-dropdown')) {
+                        const dropdowns = document.querySelectorAll('.user-dropdown-menu');
+                        dropdowns.forEach(function(dropdown) {
+                            dropdown.style.display = 'none';
+                        });
+                    }
+                });
+
+                // Fechar dropdown ao clicar em um item do menu
+                document.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const dropdownMenu = this.closest('.user-dropdown-menu');
+                        if (dropdownMenu) {
+                            dropdownMenu.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            // Mobile menu toggle functionality
+            const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+            const mainNav = document.querySelector('.main-nav');
+            
+            if (mobileMenuToggle && mainNav) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    this.setAttribute('aria-expanded', !isExpanded);
+                    this.classList.toggle('active');
+                    mainNav.classList.toggle('active');
+                });
+
+                // Fechar menu mobile ao clicar em um link
+                document.querySelectorAll('.main-nav .nav-link').forEach(link => {
+                    link.addEventListener('click', function() {
+                        mobileMenuToggle.setAttribute('aria-expanded', 'false');
+                        mobileMenuToggle.classList.remove('active');
+                        mainNav.classList.remove('active');
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
